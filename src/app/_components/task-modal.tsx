@@ -5,7 +5,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -29,11 +28,12 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import type { TaskPriority, TaskStatus } from "./task";
+import type { Task, TaskPriority, TaskStatus } from "./task";
 
 interface TaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedTask?: Task | null;
 }
 
 type TeamMember = {
@@ -42,7 +42,11 @@ type TeamMember = {
   email: string;
 };
 
-export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
+export default function TaskModal({
+  open,
+  onOpenChange,
+  selectedTask,
+}: TaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
@@ -52,6 +56,24 @@ export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedTask) {
+      setTitle(selectedTask.title);
+      setDescription(selectedTask.description ?? "");
+      setAssigneeId(selectedTask.assigneeId);
+      setDeadline(new Date(selectedTask.deadline));
+      setPriority(selectedTask.priority);
+      setStatus(selectedTask.status);
+    } else {
+      setTitle("");
+      setDescription("");
+      setAssigneeId("");
+      setDeadline(new Date());
+      setPriority("medium");
+      setStatus("todo");
+    }
+  }, [selectedTask]);
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
@@ -72,50 +94,45 @@ export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/create-tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          assigneeId,
-          deadline: deadline?.toISOString(),
-          priority,
-          status,
-        }),
-      });
+      const res = await fetch(
+        selectedTask ? "/api/update-task" : "/api/create-tasks",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: selectedTask?.id,
+            title,
+            description,
+            assigneeId,
+            deadline: deadline?.toISOString(),
+            priority,
+            status,
+          }),
+        }
+      );
 
       if (!res.ok) {
-        throw new Error(`Failed to create task: ${res.status}`);
+        throw new Error(`${selectedTask ? "Update" : "Create"} task failed: ${res.status}`);
       }
 
       await res.json();
-      alert("Task created successfully!");
-
-      // Clear form fields
-      setTitle("");
-      setDescription("");
-      setAssigneeId("");
-      setDeadline(new Date());
-      setPriority("medium");
-      setStatus("todo");
+      alert(`Task ${selectedTask ? "updated" : "created"} successfully!`);
 
       onOpenChange(false);
       window.location.reload();
     } catch (err) {
       console.error("Error submitting task:", err);
-      alert("Failed to create task. Please try again.");
+      alert("Failed to submit task. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-black sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{"Create New Task"}</DialogTitle>
+          <DialogTitle>{selectedTask ? "Update Task" : "Create New Task"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="space-y-4">
@@ -149,7 +166,7 @@ export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
                     <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    {teamMembers?.map((member) => (
+                    {teamMembers.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {member.name}
                       </SelectItem>
@@ -211,7 +228,7 @@ export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="done">Done</SelectItem>
                   </SelectContent>
                 </Select>
@@ -227,8 +244,8 @@ export default function TaskModal({ open, onOpenChange }: TaskModalProps) {
             >
               Cancel
             </Button>
-            <Button className="border border-black" type="submit">
-              {"Create Task"}
+            <Button className="border border-black" type="submit" disabled={loading}>
+              {selectedTask ? "Update Task" : "Create Task"}
             </Button>
           </DialogFooter>
         </form>

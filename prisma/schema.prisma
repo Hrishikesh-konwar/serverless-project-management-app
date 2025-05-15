@@ -100,4 +100,6 @@ enum TaskStatus {
   todo
   in_progress
   done
+  dropped
+  deleted
 }
