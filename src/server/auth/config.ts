@@ -16,31 +16,36 @@ export const authConfig: NextAuthConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+      authorize: async (credentials, req) => {
+        const email = credentials?.email;
+        const password = credentials?.password;
+      
+        if (typeof email !== "string" || typeof password !== "string") {
           throw new Error("Missing email or password");
         }
-
+      
         const user = await db.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
-
-        if (!user || !user.hashedPassword) {
+      
+        if (!user?.hashedPassword) {
           throw new Error("Invalid credentials");
         }
-
-        const isValid = await bcrypt.compare(credentials.password, user.hashedPassword);
+      
+        const isValid = await bcrypt.compare(password, user.hashedPassword);
         if (!isValid) {
           throw new Error("Invalid credentials");
         }
-
+      
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           image: user.image,
         };
-      },
+      }
+      
+
     }),
   ],
   adapter: PrismaAdapter(db),
