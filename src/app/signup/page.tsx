@@ -17,7 +17,7 @@ export default function SignUpPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/signup', {
+      const res = await fetch('https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/sign-up', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

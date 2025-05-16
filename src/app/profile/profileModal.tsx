@@ -46,7 +46,7 @@ export default function ProfileModal({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/update-user", {
+      const res = await fetch("https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/update-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

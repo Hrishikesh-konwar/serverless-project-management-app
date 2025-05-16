@@ -21,7 +21,7 @@ export default function TaskDashboard() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await fetch("/api/get-tasks");
+        const res = await fetch("https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/get-task-list");
         const data = await res.json();
         setTasks(data.tasks);
       } catch (error) {
@@ -41,7 +41,7 @@ export default function TaskDashboard() {
 
   const handleStatusChange = async (task: Task, status: string) => {
     try {
-      const apiResponse = await fetch("/api/update-task", {
+      const apiResponse = await fetch("https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/update-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...task, newStatus: status }),

@@ -78,7 +78,7 @@ export default function TaskModal({
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
-        const res = await fetch("/api/team-members");
+        const res = await fetch("https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/get-user");
         const data = await res.json();
         setTeamMembers(data.users);
       } catch (error) {
@@ -95,7 +95,7 @@ export default function TaskModal({
 
     try {
       const res = await fetch(
-        selectedTask ? "/api/update-task" : "/api/create-tasks",
+        selectedTask ? "https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/update-task" : "https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/create-task",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
