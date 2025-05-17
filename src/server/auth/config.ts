@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type NextAuthConfig } from "next-auth";
 // import DiscordProvider from "next-auth/providers/discord";
@@ -24,19 +26,25 @@ export const authConfig: NextAuthConfig = {
           throw new Error("Missing email or password");
         }
       
-        const user = await db.user.findUnique({
-          where: { email },
+        const res = await fetch(`https://16ty7qdrel.execute-api.ap-south-1.amazonaws.com/get-user-by-filter`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filterKey : "email", filterValue : email }),
         });
       
+        if (!res.ok) {
+          throw new Error("Failed to fetch user");
+        }     
+        const user = await res.json();        
+
         if (!user?.hashedPassword) {
           throw new Error("Invalid credentials");
         }
       
-        const isValid = await bcrypt.compare(password, user.hashedPassword);
+        const isValid = await bcrypt.compare(password, user.hashedPassword as string);
         if (!isValid) {
           throw new Error("Invalid credentials");
         }
-      
         return {
           id: user.id,
           name: user.name,
